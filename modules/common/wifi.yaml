@@ -4,7 +4,7 @@
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  domain: .home.arpa
+  domain: !secret domain_name
   ap:
     ssid: ${my_name}
     password: !secret ap_password

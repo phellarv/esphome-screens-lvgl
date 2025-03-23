@@ -3,8 +3,6 @@ substitutions:
   # Screen Size
   screen_height: '480px'
   screen_width: '480px'
-#  subst_taklampe: light.taklampe_1_stue
-#  subst_stalampe: light.readinglight_1_stue
   subst_taklampe: light.taklampe_1_stue
   subst_stalampe: light.readinglight_1_stue
 
