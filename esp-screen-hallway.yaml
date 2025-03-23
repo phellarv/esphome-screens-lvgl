@@ -1,0 +1,665 @@
+substitutions:
+  my_name: "Square Screen Hallway"
+  # Screen Size
+  screen_height: '480px'
+  screen_width: '480px'
+#  subst_taklampe: light.taklampe_1_stue
+#  subst_stalampe: light.readinglight_1_stue
+  subst_taklampe: light.taklampe_1_stue
+  subst_stalampe: light.readinglight_1_stue
+
+packages:
+  fonts: !include modules/common/fonts.yaml
+  wifi: !include modules/common/wifi.yaml
+  image: !include modules/common/images.yaml
+  core: !include modules/common/core.yaml
+  colors: !include modules/common/color.yaml
+  hardware: !include modules/hardware/guition-4-480x480-square.yaml
+  top_layer: !include modules/lvgl/top_layer_square_screen.yaml
+  sensors_base: !include modules/sensors/sensors_base_square.yaml
+  theme: !include modules/lvgl/theme.yaml
+  style_definitions: !include modules/lvgl/style_definitions_common.yaml
+#  bluetooth: !include modules/common/bluetooth_tracker.yaml
+
+esphome:
+  name: esp-screen-hallway
+  friendly_name: ${my_name}
+  on_boot:
+    - lvgl.widget.hide: top_layer_btn_matrix
+    - delay: 15s
+    - lvgl.widget.hide: boot_screen
+    - lvgl.widget.show: top_layer_btn_matrix
+
+script:
+  - id: time_update
+    then:
+      - lambda: |-
+          // No operation
+api:
+  on_client_connected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lvgl.widget.show: lbl_hastatus
+  on_client_disconnected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lvgl.widget.hide: lbl_hastatus
+
+binary_sensor:
+  - platform: homeassistant
+    name: "presence_hallway_sensor"
+    id: presence_hallway_sensor
+    entity_id: binary_sensor.motion_1_gang_occupancy
+    on_state:
+      - if:
+          condition:
+            - binary_sensor.is_on: "presence_hallway_sensor"
+          then:      
+            - logger.log: "LVGL resume"
+            - lvgl.resume:
+            - lvgl.page.show: main_page
+            - lvgl.widget.redraw
+            - light.turn_on: backlight
+          else:
+            - logger.log: "LVGL is idle"
+            - light.turn_off: 
+                id: backlight
+                transition_length: 5s          
+            - lvgl.pause:
+                show_snow: true # Prevent burn-in
+
+
+sensor:
+# Værsensorer
+  - platform: homeassistant
+    id: temperatur_ute_text
+    entity_id: sensor.temperatur_ute
+    on_value:
+      - lvgl.label.update:
+          id: lbl_temperature_ute_text
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+    on_value_range:
+      - below: 10
+        above: 0
+        then:
+          - lvgl.widget.update:
+              id: lbl_temperature_ute_text
+              text_color: Light_Salmon
+      - below: 0
+        above: -10
+        then:
+          - lvgl.widget.update:
+              id: lbl_temperature_ute_text
+              text_color: Light_Pink
+      - above: 9
+        then:
+          - lvgl.widget.update:
+              id: lbl_temperature_ute_text
+              text_color: Red
+      - below: -9
+        then:
+          - lvgl.widget.update:
+              id: lbl_temperature_ute_text
+              text_color: Royal_Blue
+  - platform: homeassistant
+    id: vind_ute_text
+    entity_id: sensor.bjerkedalen_wind_strength
+    on_value:
+      - lvgl.label.update:
+          id: lbl_vind_ute_text
+          text:
+            format: " %.1f m/s"
+            args: [ 'x' ]
+
+text_sensor:
+# Setter string til icon definert i fonts.yaml utfra openweathermap
+  - platform: homeassistant
+    id: sensor_weather_icon
+    entity_id: sensor.openweathermap_condition
+    on_value:
+      - lvgl.label.update:
+          id: lbl_weather_condition_icon
+          text: !lambda |-
+            static char buf[10];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "\U000F0594";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "\U000F0590";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "\U000F0F2F";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "\U000F0591";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "\U000F0592";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "\U000F0593";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "\U000F067E";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "\U000F0595";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "\U000F0596";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "\U000F0597";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "\U000F0598";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "\U000F067F";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "\U000F0599";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "\U000F059D";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "\U000F059E";
+            } else {
+              icon = "\U000F14E4";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+      - lvgl.label.update:
+          id: lbl_weather_condition_name
+          text: !lambda |-
+            static char buf[15];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "Klar natt";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "Overskyet";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "Supert";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "Tåke";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "Hagl";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "Tordenvær";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "Regn og\ntorden";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "Delvis\nskyet";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "Mye regn";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "Regn";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "Snø";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "Sklett";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "Sol";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "Vindfullt";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "Ruskevær";
+            } else {
+              icon = "Ukjent";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+# 58 Nydalen
+  - platform: homeassistant
+    id: ha_entur_businfo_58_nydalen
+    entity_id: sensor.58_bjerkedalen_park_platform_10993
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_58_nydalen_first
+            text:
+              format: "%s min"
+              args: [ 'x.c_str()' ]
+  - platform: homeassistant
+    id: ha_entur_businfo_58_nydalen_next
+    entity_id: sensor.next_58_nydalen
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_58_nydalen_next
+            text: !lambda return x;
+# 60 Sentrum
+  - platform: homeassistant
+    id: ha_entur_businfo_60
+    entity_id: sensor.60_okernbraten_platform_10901
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_60_vippetangen_first
+            text:
+              format: "%s min"
+              args: [ 'x.c_str()' ]
+  - platform: homeassistant
+    id: ha_entur_businfo_60_next
+    entity_id: sensor.next_60_sentrum
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_60_vippetangen_next
+            text: !lambda return x;
+# Hvor mange dager er det til Papirsøpla tømmes
+  - platform: homeassistant
+    id: sensor_paperwaste_relative_next
+    entity_id: sensor.paperwaste_next
+    filters:
+      - to_lower:
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_info_paper_waste
+            text: !lambda return " " + x;
+# Hvor mange dager er det til Restsøpla tømmes
+  - platform: homeassistant
+    id: sensor_restwaste_relative_next
+    entity_id: sensor.restwaste_next
+    filters:
+      - to_lower:
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_info_rest_waste
+            text: !lambda return " " + x;
+# Hvor mange dager er det til Posten kommer
+  - platform: homeassistant
+    id: sensor_mail_relative_next
+    entity_id: sensor.posten_sensor_next_relative
+    filters:
+      - to_lower:
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_info_mail
+            text: !lambda return " " + x;
+
+
+
+lvgl:
+#full_refresh: true # redraw whole display every time so very slow
+  disp_bg_image: bg_image
+  displays:
+    - my_display
+  touchscreens:
+    - my_touchscreen
+  on_idle:
+    timeout: 240s  # Turn off back light if idle for 10 secs
+    then:
+      - logger.log: "LVGL is idle"
+      - light.turn_off: 
+          id: backlight
+          transition_length: 5s          
+      - lvgl.pause:
+          show_snow: true # Prevent burn-in  disp_bg_color: black
+  pages:
+    - id: main_page
+      bg_color: black
+      bg_opa: TRANSP
+      widgets:
+        - obj:
+            align: CENTER
+            width: 470
+            height: 470
+            pad_all: 2
+            bg_opa: TRANSP
+            bg_color: black
+            border_opa: COVER
+            border_color: white
+            border_width: 0
+            layout:
+              pad_column: 0
+              pad_row: 0
+              type: GRID
+              grid_rows: [47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
+              grid_columns: [47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
+            widgets:
+              - obj:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 3
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 4
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  styles: header_footer
+                  widgets:
+                    - label:
+                        text_font: roboto_20
+                        text: "Hovedside"
+                        align: CENTER
+                        text_align: CENTER
+                        text_color: 0xFFFFFF
+              - label:
+                  text: "\uF1EB"
+                  id: lbl_hastatus
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 8
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  hidden: true
+                  bg_opa: TRANSP
+                  text_align: right
+                  text_color: 0xFFFFFF
+# Været
+              - label:
+                  text: "\U000F14E4"
+                  id: lbl_weather_condition_icon
+                  text_font: icons_100
+                  text_color: white
+                  text_align: CENTER
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "Unknown"
+                  id: lbl_weather_condition_name
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_30
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F0F54"
+                  text_align: CENTER
+                  text_color: blue
+                  text_font: mdi_42
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 6
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: lbl_temperature_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_30
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F15FA"
+                  text_align: CENTER
+                  text_color: green
+                  text_font: mdi_42
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 6
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- m/s"
+                  id: lbl_vind_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_30
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+# Lys i stua
+              - button:
+                  id: ceiling_light_symbol
+                  widgets:
+                    - label:
+                        text_font: mdi_62
+                        align: center
+                        text: "\U000F0769"
+                  checkable: true
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 5
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  on_press:
+                    then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          data:
+                            entity_id: ${subst_taklampe}
+                      - delay: 2ms
+                      - homeassistant.action:
+                          action: input_button.press
+                          data:
+                            entity_id: input_button.lagre_lys
+              - button:
+                  id: reading_light_symbol
+                  widgets:
+                    - label:
+                        text_font: mdi_62
+                        align: center
+                        text: "\U000F08DD"
+                  checkable: true
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  on_press:
+                    then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          data:
+                            entity_id: ${subst_stalampe}
+                      - delay: 2ms
+                      - homeassistant.action:
+                          action: input_button.press
+                          data:
+                            entity_id: input_button.lagre_lys
+
+# 58 Nydalen
+              - label:
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 5
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  text: "58 Nydalen"
+                  text_font: roboto_30
+                  text_color: Light_Blue
+              - label:
+                  grid_cell_row_pos: 2
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  text: "Neste:  "
+                  text_font: roboto_18
+                  text_color: 0xFFFFFF
+              - label:
+                  grid_cell_row_pos: 2
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  id: lbl_58_nydalen_first
+                  text_font: roboto_30
+                  text_color: Light_Green
+              - label:
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  text: "Etter det:  "
+                  text_font: roboto_18
+                  text_color: 0xFFFFFF
+              - label:
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  id: lbl_58_nydalen_next
+                  text_font: roboto_22
+                  text_color: Light_Yellow
+# 60 Vippetangen
+              - label:
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 5
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  text: "60 Vippetangen"
+                  text_font: roboto_30
+                  text_color: Light_Blue
+              - label:
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  text: "Neste:  "
+                  text_font: roboto_18
+                  text_color: 0xFFFFFF
+              - label:
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  id: lbl_60_vippetangen_first
+                  text_font: roboto_30
+                  text_color: Light_Green
+              - label:
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  text: "Etter det:  "
+                  text_font: roboto_18
+                  text_color: 0xFFFFFF
+              - label:
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  id: lbl_60_vippetangen_next
+                  text_font: roboto_22
+                  text_color: Light_Yellow
+
+# Posten
+              - label:
+                  text: "\U000F06EE"
+                  text_color: Orange_Red
+                  text_font: mdi_42
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+              - label:
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  id: lbl_info_mail
+                  text_font: roboto_30
+                  text_color: Orange_Red
+# Restsøppel
+              - label:
+                  text: "\U000F0A79"
+                  text_color: Rosy_Brown
+                  text_font: mdi_42
+                  grid_cell_row_pos: 8
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+              - label:
+                  grid_cell_row_pos: 8
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  id: lbl_info_rest_waste
+                  text_font: roboto_30
+                  text_color: Rosy_Brown
+# Papirsøppel
+              - label:
+                  text: "\U000F1001"
+                  text_color: Yellow_Green
+                  text_font: mdi_42
+                  grid_cell_row_pos: 8
+                  grid_cell_column_pos: 5
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+              - label:
+                  grid_cell_row_pos: 8
+                  grid_cell_column_pos: 6
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+                  bg_opa: TRANSP
+                  id: lbl_info_paper_waste
+                  text_font: roboto_30
+                  text_color: Yellow_Green
+
+
+touchscreen:
+  on_touch:
+    - if:
+        condition: lvgl.is_paused
+        then:
+          - logger.log: "LVGL resuming"
+          - lvgl.resume:
+          - lvgl.page.show: main_page
+          - lvgl.widget.redraw
+          - light.turn_on: backlight
+

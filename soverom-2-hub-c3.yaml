@@ -1,0 +1,31 @@
+substitutions:
+  my_name: "Bluetooth Proxy Upstairs"
+
+packages:
+  wifi: !include modules/common/wifi.yaml
+  bluetooth: !include modules/common/bluetooth_tracker.yaml
+
+esphome:
+  name: soverom-2-hub-c3
+  friendly_name: ${my_name}
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "JoKRncTNoxKnbHct1PgBXaQSy0Iyztn+hIFiuozxfXw="
+
+ota:
+  - platform: esphome
+    password: "67249cf95e3775ddf312ab17331d65c2"
+
+
+captive_portal:
+

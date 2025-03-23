@@ -1,0 +1,117 @@
+---
+defaults:
+  normal_glyphs: '%.,°-+:0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ abcdefghijklmnopqrstuvwxyzæøå/'
+
+font:
+  - file: https://github.com/Templarian/MaterialDesign-Webfont/raw/refs/heads/master/fonts/materialdesignicons-webfont.ttf
+    id: mdi_200
+    size: 200
+    bpp: 4
+    glyphs: [
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+     ]
+  - file: https://github.com/Templarian/MaterialDesign-Webfont/raw/refs/heads/master/fonts/materialdesignicons-webfont.ttf
+    id: mdi_42
+    size: 42
+    bpp: 4
+    glyphs: [
+      "\U000F0335", # mdi-lightbulb
+      "\U000F08DD", # mdi-floor-lamp
+      "\U000F0769", # mdi-ceiling-light
+      "\U000F0F55", # mdi-home-thermometer-outline
+      "\U000F0F54", # mdi-home-thermometer
+      "\U000F0393", # mdi-thermostat
+      "\U000F0241", # mdi-flash
+      "\U000F0A79", # mdi-trashcan
+      "\U000F1001", # mdi-newspaper-variant
+      "\U000F06EE", # mdi-mailbox
+      "\U000F0114", # mdi-cash
+      "\U000F109F", # mdi-coffee-maker
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+     ]
+  - file: https://github.com/Templarian/MaterialDesign-Webfont/raw/refs/heads/master/fonts/materialdesignicons-webfont.ttf
+    id: mdi_30
+    size: 30
+    bpp: 4
+    glyphs: [
+      "\U000F0335", # mdi-lightbulb
+      "\U000F08DD", # mdi-floor-lamp
+      "\U000F0769", # mdi-ceiling-light
+      "\U000F0F55", # mdi-home-thermometer-outline
+      "\U000F0F54", # mdi-home-thermometer
+      "\U000F0393", # mdi-thermostat
+      "\U000F0241", # mdi-flash
+      "\U000F0A79", # mdi-trashcan
+      "\U000F1001", # mdi-newspaper-variant
+      "\U000F06EE", # mdi-mailbox
+      "\U000F0114", # mdi-cash
+      "\U000F109F", # mdi-coffee-maker
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+     ]
+  - file: https://github.com/Templarian/MaterialDesign-Webfont/raw/refs/heads/master/fonts/materialdesignicons-webfont.ttf
+    id: icons_100
+    size: 100
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+  - file: https://github.com/Templarian/MaterialDesign-Webfont/raw/refs/heads/master/fonts/materialdesignicons-webfont.ttf
+    id: icons_40
+    size: 40
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+  - file: gfonts://Roboto@300
+    id: roboto_20
+    size: 20
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@300
+    id: roboto_24
+    size: 24
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@300
+    id: roboto_30
+    size: 30
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@300
+    id: roboto_40
+    size: 40
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity

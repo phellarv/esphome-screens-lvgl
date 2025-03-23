@@ -1,0 +1,1501 @@
+substitutions:
+  name: "sdl-testing"
+  friendly_name: "Testing"
+  device_description: "Testing"
+  screen_height: '480px'
+  screen_width: '480px'
+#  subst_taklampe: light.taklampe_1_stue
+#  subst_stalampe: light.readinglight_1_stue
+  subst_taklampe: light.taklampe_2_kontor
+  subst_stalampe: light.lampe_2_kontorpult
+
+packages:
+  fonts: !include modules/common/fonts.yaml
+#  wifi: !include modules/common/wifi.yaml
+  image: !include modules/common/images.yaml
+#  core: !include modules/common/core.yaml
+  core: !include modules/common/core_sdl.yaml
+#  hardware: !include modules/hardware/guition-4-480x480-square.yaml
+  top_layer: !include modules/lvgl/top_layer_square_screen.yaml
+#  sensors_base: !include modules/sensors/sensors_base_square.yaml
+  sensors_base: !include modules/sensors/sensors_base_square_sdl.yaml
+  theme: !include modules/lvgl/theme.yaml
+  style_definitions: !include modules/lvgl/style_definitions_common.yaml
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+
+  on_boot:
+    priority: -100
+    then:
+    - lvgl.widget.hide: top_layer_btn_matrix
+    - delay: 15s
+    - lvgl.widget.hide: boot_screen
+    - lvgl.widget.show: top_layer_btn_matrix
+
+host:
+  mac_address: "62:23:45:AF:B3:07"
+
+touchscreen:
+  - platform: sdl
+    id: my_touchscreen
+    display: my_display
+
+display:
+  - platform: sdl
+    id: my_display
+    update_interval: never
+    auto_clear_enabled: false
+    dimensions:
+      width: 480
+      height: 480
+
+script:
+  - id: time_update
+    then:
+      - lambda: |-
+          // No operation
+api:
+  on_client_connected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lvgl.widget.show: lbl_hastatus
+          - lvgl.widget.show: lbl_hastatus_wth
+  on_client_disconnected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lvgl.widget.hide: lbl_hastatus
+          - lvgl.widget.hide: lbl_hastatus_wth
+
+sensor:
+  - platform: homeassistant
+    id: light_brightness_taklampe
+    entity_id: ${subst_taklampe}
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: dimmer_slider_taklampe
+          value: !lambda |-
+            if (isnan(id(light_brightness_taklampe).state)) {
+              return 0;
+            }
+            return x;
+  - platform: homeassistant
+    id: light_brightness_stalampe
+    entity_id: ${subst_stalampe}
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: dimmer_slider_stalampe
+          value: !lambda |-
+            if (isnan(id(light_brightness_stalampe).state)) {
+              return 0;
+            }
+            return x;
+  - platform: homeassistant
+    id: sensor_comfort_temp_stue
+    name: "Comfort Livingroom From Home Assistant"
+    entity_id: input_number.temperatur_1_stue_komfort
+    on_value:
+      - lvgl.spinbox.update:
+          id: spinbox_temp_id
+          value: !lambda return x;
+  - platform: homeassistant
+    id: temperature_1_stue_average
+    name: "Average Temperature Sensor Livingroom From Home Assistant"
+    entity_id: sensor.temperature_1_stue_average
+    on_value:
+      - lvgl.label.update:
+          id: lbl_temperature_inne_text
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: temperatur_ute_text
+    entity_id: sensor.temperatur_ute
+    on_value:
+      - lvgl.label.update:
+          id: lbl_temperature_ute_text
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: vind_ute_text
+    entity_id: sensor.bjerkedalen_wind_strength
+    on_value:
+      - lvgl.label.update:
+          id: lbl_vind_ute_text
+          text:
+            format: " %.1f m/s"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: trykk_ute_text
+    entity_id: sensor.bjerkedalen_pressure
+    on_value:
+      - lvgl.label.update:
+          id: lbl_trykk_ute_text
+          text:
+            format: " %.0f mbar"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: fukt_ute_text
+    entity_id: sensor.bjerkedalen_humidity
+    on_value:
+      - lvgl.label.update:
+          id: lbl_fukt_ute_text
+          text:
+            format: " %.0f %%"
+            args: [ 'x' ]
+# Været i morgen
+  - platform: homeassistant
+    id: wth_sensor_tempmax
+    entity_id: sensor.temperature_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_temperature_high_text
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_tempmin
+    entity_id: sensor.low_temperature_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_temperature_low_text
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_wind
+    entity_id: sensor.wind_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_vind_ute_text
+          text:
+            format: " %.1f m/s"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_precip
+    entity_id: sensor.precipitation_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_fukt_ute_text
+          text:
+            format: " %.0f %%"
+            args: [ 'x' ]
+# Været dagen etter i morgen
+  - platform: homeassistant
+    id: wth_sensor_tempmax_1
+    entity_id: sensor.temperature_forecast_next_day_1
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_temperature_high_text_1
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_tempmin_1
+    entity_id: sensor.low_temperature_forecast_next_day_1
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_temperature_low_text_1
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_wind_1
+    entity_id: sensor.wind_forecast_next_day_1
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_vind_ute_text_1
+          text:
+            format: " %.1f m/s"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_precip_1
+    entity_id: sensor.precipitation_forecast_next_day_1
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_fukt_ute_text_1
+          text:
+            format: " %.0f %%"
+            args: [ 'x' ]
+# Været i morgen
+  - platform: homeassistant
+    id: wth_sensor_tempmax_2
+    entity_id: sensor.temperature_forecast_next_day_2
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_temperature_high_text_2
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_tempmin_2
+    entity_id: sensor.low_temperature_forecast_next_day_2
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_temperature_low_text_2
+          text:
+            format: " %.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_wind_2
+    entity_id: sensor.wind_forecast_next_day_2
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_vind_ute_text_2
+          text:
+            format: " %.1f m/s"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: wth_sensor_precip_2
+    entity_id: sensor.precipitation_forecast_next_day_2
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_fukt_ute_text_2
+          text:
+            format: " %.0f %%"
+            args: [ 'x' ]
+
+text_sensor:
+# Setter string til icon definert i fonts.yaml utfra openweathermap
+  - platform: homeassistant
+    id: sensor_weather_icon
+    entity_id: sensor.openweathermap_condition
+    on_value:
+      - lvgl.label.update:
+          id: lbl_weather_condition_icon
+          text: !lambda |-
+            static char buf[10];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "\U000F0594";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "\U000F0590";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "\U000F0F2F";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "\U000F0591";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "\U000F0592";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "\U000F0593";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "\U000F067E";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "\U000F0595";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "\U000F0596";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "\U000F0597";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "\U000F0598";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "\U000F067F";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "\U000F0599";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "\U000F059D";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "\U000F059E";
+            } else {
+              icon = "\U000F14E4";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+      - lvgl.label.update:
+          id: lbl_weather_condition_name
+          text: !lambda |-
+            static char buf[15];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "Klar natt";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "Overskyet";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "Supert";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "Tåke";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "Hagl";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "Tordenvær";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "Regn og\ntorden";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "Delvis\nskyet";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "Mye regn";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "Regn";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "Snø";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "Sklett";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "Sol";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "Vindfullt";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "Ruskevær";
+            } else {
+              icon = "Ukjent";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+# Været i morgen
+  - platform: homeassistant
+    id: wth_sensor_weather_icon
+    entity_id: sensor.condition_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_weather_condition_icon
+          text: !lambda |-
+            static char buf[10];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "\U000F0594";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "\U000F0590";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "\U000F0F2F";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "\U000F0591";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "\U000F0592";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "\U000F0593";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "\U000F067E";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "\U000F0595";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "\U000F0596";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "\U000F0597";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "\U000F0598";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "\U000F067F";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "\U000F0599";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "\U000F059D";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "\U000F059E";
+            } else {
+              icon = "\U000F14E4";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+      - lvgl.label.update:
+          id: wth_lbl_weather_condition_name
+          text: !lambda |-
+            static char buf[15];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "Klar natt";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "Overskyet";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "Supert";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "Tåke";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "Hagl";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "Tordenvær";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "Regn og\ntorden";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "Delvis\nskyet";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "Mye regn";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "Regn";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "Snø";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "Sklett";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "Sol";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "Vindfullt";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "Ruskevær";
+            } else {
+              icon = "Ukjent";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+# Været dagen etter i morgen
+  - platform: homeassistant
+    id: wth_sensor_weather_icon_1
+    entity_id: sensor.condition_forecast_next_day_1
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_weather_condition_icon_1
+          text: !lambda |-
+            static char buf[10];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "\U000F0594";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "\U000F0590";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "\U000F0F2F";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "\U000F0591";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "\U000F0592";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "\U000F0593";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "\U000F067E";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "\U000F0595";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "\U000F0596";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "\U000F0597";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "\U000F0598";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "\U000F067F";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "\U000F0599";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "\U000F059D";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "\U000F059E";
+            } else {
+              icon = "\U000F14E4";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+      - lvgl.label.update:
+          id: wth_lbl_weather_condition_name_1
+          text: !lambda |-
+            static char buf[15];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "Klar natt";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "Overskyet";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "Supert";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "Tåke";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "Hagl";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "Tordenvær";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "Regn og\ntorden";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "Delvis\nskyet";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "Mye regn";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "Regn";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "Snø";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "Sklett";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "Sol";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "Vindfullt";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "Ruskevær";
+            } else {
+              icon = "Ukjent";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+# Været dagen etter dagen etter i morgen
+  - platform: homeassistant
+    id: wth_sensor_weather_icon_2
+    entity_id: sensor.condition_forecast_next_day_2
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_weather_condition_icon_2
+          text: !lambda |-
+            static char buf[10];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "\U000F0594";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "\U000F0590";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "\U000F0F2F";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "\U000F0591";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "\U000F0592";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "\U000F0593";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "\U000F067E";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "\U000F0595";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "\U000F0596";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "\U000F0597";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "\U000F0598";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "\U000F067F";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "\U000F0599";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "\U000F059D";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "\U000F059E";
+            } else {
+              icon = "\U000F14E4";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+      - lvgl.label.update:
+          id: wth_lbl_weather_condition_name_2
+          text: !lambda |-
+            static char buf[15];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "Klar natt";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "Overskyet";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "Supert";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "Tåke";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "Hagl";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "Tordenvær";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "Regn og\ntorden";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "Delvis\nskyet";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "Mye regn";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "Regn";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "Snø";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "Sklett";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "Sol";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "Vindfullt";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "Ruskevær";
+            } else {
+              icon = "Ukjent";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+
+# "Lysbrytere" i stua
+  - platform: homeassistant
+    id: ts_taklampe_stua
+    entity_id: ${subst_taklampe}
+    on_value:
+      - if:
+          condition:
+            text_sensor.state: 
+              id: ts_taklampe_stua
+              state: "on"
+          then:
+            - delay: 500ms
+            - lvgl.widget.update:
+                id: ceiling_light_symbol
+                state:
+                  checked: true
+          else:
+            - delay: 500ms
+            - lvgl.widget.update:
+                id: ceiling_light_symbol
+                state:
+                  checked: false
+  - platform: homeassistant
+    id: ts_stalampe_stua
+    entity_id: ${subst_stalampe}
+    on_value:
+      - if:
+          condition:
+            text_sensor.state: 
+              id: ts_stalampe_stua
+              state: "on"
+          then:
+            - delay: 500ms
+            - lvgl.widget.update:
+                id: reading_light_symbol
+                state:
+                  checked: true
+          else:
+            - delay: 500ms
+            - lvgl.widget.update:
+                id: reading_light_symbol
+                state:
+                  checked: false
+
+lvgl:
+#full_refresh: true # redraw whole display every time so very slow
+  disp_bg_image: bg_image
+  displays:
+    - my_display
+  touchscreens:
+    - my_touchscreen
+#   on_idle:
+#     timeout: 240s  # Turn off back light if idle for 10 secs
+#     then:
+#       - logger.log: "LVGL is idle"
+#       - light.turn_off: 
+#           id: backlight
+#           transition_length: 5s          
+#       - lvgl.pause:
+#           show_snow: true # Prevent burn-in  disp_bg_color: black
+  pages:
+    - id: main_page
+      bg_color: black
+      bg_opa: TRANSP
+      widgets:
+        - obj:
+            align: CENTER
+            width: 470
+            height: 470
+            pad_all: 2
+            bg_color: black
+            border_opa: TRANSP
+            bg_opa: TRANSP
+            border_color: white
+            border_width: 0
+            layout:
+              pad_column: 0
+              pad_row: 0
+              type: GRID
+              grid_rows: [47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
+              grid_columns: [47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
+            widgets:
+              - obj:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 3
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 4
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  styles: header_footer
+                  widgets:
+                    - label:
+                        text_font: roboto_20
+                        text: "Hovedside"
+                        align: CENTER
+                        text_align: CENTER
+                        text_color: 0xFFFFFF
+              - label:
+                  text: "\uF1EB"
+                  id: lbl_hastatus
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 8
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  hidden: true
+                  bg_opa: TRANSP
+                  text_align: right
+                  text_color: 0xFFFFFF
+
+              - button:
+                  id: ceiling_light_symbol
+                  widgets:
+                    - label:
+                        text_font: mdi_62
+                        align: center
+                        text: "\U000F0769"
+                  checkable: true
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 6
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  on_press:
+                    then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          data:
+                            entity_id: ${subst_taklampe}
+                      - delay: 2ms
+                      - homeassistant.action:
+                          action: input_button.press
+                          data:
+                            entity_id: input_button.lagre_lys
+              - slider:
+                  id: dimmer_slider_taklampe
+                  align: CENTER
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 6
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  width: 220
+                  height: 20
+                  min_value: 0
+                  max_value: 255
+                  on_release:
+                    - homeassistant.action:
+                        action: light.turn_on
+                        data:
+                          entity_id: ${subst_taklampe}
+                          brightness: !lambda return int(x);
+
+
+              - button:
+                  id: reading_light_symbol
+                  widgets:
+                    - label:
+                        text_font: mdi_62
+                        align: center
+                        text: "\U000F08DD"
+                  checkable: true
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 6
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  on_press:
+                    then:
+                      - homeassistant.action:
+                          action: light.toggle
+                          data:
+                            entity_id: ${subst_stalampe}
+                      - delay: 2ms
+                      - homeassistant.action:
+                          action: input_button.press
+                          data:
+                            entity_id: input_button.lagre_lys
+              - slider:
+                  id: dimmer_slider_stalampe
+                  align: CENTER
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 6
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  width: 220
+                  height: 20
+                  min_value: 0
+                  max_value: 255
+                  on_release:
+                    - homeassistant.action:
+                        action: light.turn_on
+                        data:
+                          entity_id: ${subst_stalampe}
+                          brightness: !lambda return int(x);
+
+              - label:
+                  text: "\U000F14E4"
+                  id: lbl_weather_condition_icon
+                  text_font: icons_100
+                  text_color: white
+                  text_align: CENTER
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "Unknown"
+                  id: lbl_weather_condition_name
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F0F55"
+                  text_align: CENTER
+                  text_font: mdi_42
+                  text_color: red
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 6
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: lbl_temperature_inne_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F0F54"
+                  text_align: CENTER
+                  text_color: blue
+                  text_font: mdi_42
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 6
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: lbl_temperature_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F15FA"
+                  text_align: CENTER
+                  text_color: green
+                  text_font: mdi_42
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 6
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- m/s"
+                  id: lbl_vind_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F029A"
+                  text_align: CENTER
+                  text_color: purple
+                  text_font: mdi_42
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 6
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "---- mbar"
+                  id: lbl_trykk_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F058E"
+                  text_align: CENTER
+                  text_color: cyan
+                  text_font: mdi_42
+                  grid_cell_row_pos: 8
+                  grid_cell_column_pos: 6
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "---- %%"
+                  id: lbl_fukt_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 8
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - button:
+                  id: spin_up_temp
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 0
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+                  checkable: false
+                  on_click:
+                    - lvgl.spinbox.increment: spinbox_temp_id
+                  widgets:
+                    - label:
+                          text_font: mdi_62
+                          text: "\U000F11EC"
+              - spinbox:
+                  id: spinbox_temp_id
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  align: CENTER
+                  text_align: CENTER
+                  width: 80
+                  height: 80
+                  range_from: 15
+                  range_to: 25
+                  step: 1
+                  anim_time: 1s
+                  rollover: false
+                  digits: 2
+                  decimal_places: 0
+                  text_font: roboto_46
+                  on_value:
+                      - homeassistant.action:
+                          action: input_number.set_value
+                          data:
+                              entity_id: input_number.temperatur_1_stue_komfort
+                              value: !lambda return x;
+              - button:
+                  id: spin_down_temp
+                  checkable: false
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+                  on_click:
+                    - lvgl.spinbox.decrement: spinbox_temp_id
+                  widgets:
+                    - label:
+                          text_font: mdi_62
+                          text: "\U000F1639"
+    - id: weather_page
+      bg_color: black
+      widgets:
+        - obj:
+            align: CENTER
+            width: 470
+            height: 470
+            pad_all: 2
+            bg_color: black
+            border_opa: COVER
+            border_color: white
+            border_width: 0
+            layout:
+              pad_column: 0
+              pad_row: 0
+              type: GRID
+              grid_rows: [47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
+              grid_columns: [47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
+            widgets:
+              - obj:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 3
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 4
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  styles: header_footer
+                  widgets:
+                    - label:
+                        text_font: roboto_20
+                        text: "Vær neste 3 dager"
+                        align: CENTER
+                        text_align: CENTER
+                        text_color: 0xFFFFFF
+              - label:
+                  text: "\uF1EB"
+                  id: lbl_hastatus_wth
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 8
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  hidden: true
+                  bg_opa: TRANSP
+                  text_align: right
+                  text_color: 0xFFFFFF
+# Været i morgen
+              - label:
+                  text: "\U000F14E4"
+                  id: wth_lbl_weather_condition_icon
+                  text_font: icons_100
+                  text_color: white
+                  text_align: CENTER
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "Unknown"
+                  id: wth_lbl_weather_condition_name
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F10C2"
+                  text_align: CENTER
+                  text_font: mdi_42
+                  text_color: red
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: wth_lbl_temperature_high_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F10C3"
+                  text_align: CENTER
+                  text_color: blue
+                  text_font: mdi_42
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: wth_lbl_temperature_low_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F15FA"
+                  text_align: CENTER
+                  text_color: green
+                  text_font: mdi_42
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- m/s"
+                  id: wth_lbl_vind_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F058E"
+                  text_align: CENTER
+                  text_color: cyan
+                  text_font: mdi_42
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "---- %%"
+                  id: wth_lbl_fukt_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 2
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+# Været dagen etter i morgen
+              - label:
+                  text: "\U000F14E4"
+                  id: wth_lbl_weather_condition_icon_1
+                  text_font: icons_100
+                  text_color: white
+                  text_align: CENTER
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "Unknown"
+                  id: wth_lbl_weather_condition_name_1
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F10C2"
+                  text_align: CENTER
+                  text_font: mdi_42
+                  text_color: red
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: wth_lbl_temperature_high_text_1
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 5
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F10C3"
+                  text_align: CENTER
+                  text_color: blue
+                  text_font: mdi_42
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: wth_lbl_temperature_low_text_1
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 5
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F15FA"
+                  text_align: CENTER
+                  text_color: green
+                  text_font: mdi_42
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- m/s"
+                  id: wth_lbl_vind_ute_text_1
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 5
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F058E"
+                  text_align: CENTER
+                  text_color: cyan
+                  text_font: mdi_42
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "---- %%"
+                  id: wth_lbl_fukt_ute_text_1
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 5
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+# Været 2 dager etter i morgen
+              - label:
+                  text: "\U000F14E4"
+                  id: wth_lbl_weather_condition_icon_2
+                  text_font: icons_100
+                  text_color: white
+                  text_align: CENTER
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "Unknown"
+                  id: wth_lbl_weather_condition_name_2
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F10C2"
+                  text_align: CENTER
+                  text_font: mdi_42
+                  text_color: red
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: wth_lbl_temperature_high_text_2
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 8
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F10C3"
+                  text_align: CENTER
+                  text_color: blue
+                  text_font: mdi_42
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: wth_lbl_temperature_low_text_2
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 5
+                  grid_cell_column_pos: 8
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F15FA"
+                  text_align: CENTER
+                  text_color: green
+                  text_font: mdi_42
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- m/s"
+                  id: wth_lbl_vind_ute_text_2
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 6
+                  grid_cell_column_pos: 8
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "\U000F058E"
+                  text_align: CENTER
+                  text_color: cyan
+                  text_font: mdi_42
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: END
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "---- %%"
+                  id: wth_lbl_fukt_ute_text_2
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 8
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 3
+                  grid_cell_x_align: START
+                  grid_cell_y_align: CENTER
+    - id: power_page
+      bg_color: black
+      widgets:
+        - obj:
+            align: CENTER
+            width: 470
+            height: 470
+            pad_all: 2
+            bg_color: black
+            border_opa: COVER
+            border_color: white
+            border_width: 0
+            layout:
+              pad_column: 0
+              pad_row: 0
+              type: GRID
+              grid_rows: [47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
+              grid_columns: [47, 47, 47, 47, 47, 47, 47, 47, 47, 47]
+            widgets:
+              - obj:
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 3
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 4
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  styles: header_footer
+                  widgets:
+                    - label:
+                        text_font: roboto_20
+                        text: "Info om strøm"
+                        align: CENTER
+                        text_align: CENTER
+                        text_color: 0xFFFFFF
+              - label:
+                  text: "\uF1EB"
+                  id: lbl_hastatus_pwr
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 8
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 1
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  hidden: true
+                  bg_opa: TRANSP
+                  text_align: right
+                  text_color: 0xFFFFFF
+
+
+
+# touchscreens:
+#     on_touch:
+#         - if:
+#             condition: lvgl.is_paused
+#             then:
+#             - logger.log: "LVGL resuming"
+#             - lvgl.resume:
+#             - lvgl.page.show: main_page
+#             - lvgl.widget.redraw
+#             - light.turn_on: backlight

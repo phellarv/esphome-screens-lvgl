@@ -1,0 +1,10 @@
+---
+# Remember to set the substitution for my_name 
+# and it can't be longer than 32 chars
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  domain: .home.arpa
+  ap:
+    ssid: ${my_name}
+    password: !secret ap_password

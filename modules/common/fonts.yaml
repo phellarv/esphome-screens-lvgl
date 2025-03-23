@@ -1,0 +1,340 @@
+---
+defaults:
+  normal_glyphs: '%.,°-+:0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ abcdefghijklmnopqrstuvwxyzæøå/()'
+
+font:
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: mdi_82
+    size: 82
+    bpp: 4
+    glyphs: [
+      "\U000F0335", # mdi-lightbulb
+      "\U000F0336", # mdi-lightbulb-outline
+      "\U000F08DD", # mdi-floor-lamp
+      "\U000F17C8", # mdi-floor-lamp-outline
+      "\U000F0769", # mdi-ceiling-light
+      "\U000F17C7", # mdi-ceiling-light-outline
+      "\U000F0F55", # mdi-home-thermometer-outline
+      "\U000F0F54", # mdi-home-thermometer
+      "\U000F0393", # mdi-thermostat
+      "\U000F0241", # mdi-flash
+      "\U000F0A79", # mdi-trashcan
+      "\U000F0A7A", # mdi-trashcan-outline
+      "\U000F1001", # mdi-newspaper-variant
+      "\U000F1004", # mdi-newspaper-variant-outline
+      "\U000F06EE", # mdi-mailbox
+      "\U000F0D8C", # mdi-mailbox-outline
+      "\U000F0114", # mdi-cash
+      "\U000F109F", # mdi-coffee-maker
+      "\U000F181B", # mdi-coffee-maker-outline
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+      "\U000F08CA", # mdi-bus-clock
+      "\U000F1639", # mdi-minus-thick
+      "\U000F11EC", # mdi-plus-thick
+      "\U000F15FA", # mdi-windsock
+      "\U000F029A", # mdi-gauge
+      "\U000F058E", # mdi-water-percent
+      "\U000F0F65", # mdi-moon-waning-crescent
+      "\U000F0599", # mdi-weather-sunny
+     ]
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: mdi_62
+    size: 62
+    bpp: 4
+    glyphs: [
+      "\U000F0335", # mdi-lightbulb
+      "\U000F0336", # mdi-lightbulb-outline
+      "\U000F08DD", # mdi-floor-lamp
+      "\U000F17C8", # mdi-floor-lamp-outline
+      "\U000F0769", # mdi-ceiling-light
+      "\U000F17C7", # mdi-ceiling-light-outline
+      "\U000F0F55", # mdi-home-thermometer-outline
+      "\U000F0F54", # mdi-home-thermometer
+      "\U000F10C2", # mdi-thermometer-high
+      "\U000F10C3", # mdi-thermometer-low
+      "\U000F0393", # mdi-thermostat
+      "\U000F0241", # mdi-flash
+      "\U000F0A79", # mdi-trashcan
+      "\U000F0A7A", # mdi-trashcan-outline
+      "\U000F1001", # mdi-newspaper-variant
+      "\U000F1004", # mdi-newspaper-variant-outline
+      "\U000F06EE", # mdi-mailbox
+      "\U000F0D8C", # mdi-mailbox-outline
+      "\U000F0114", # mdi-cash
+      "\U000F109F", # mdi-coffee-maker
+      "\U000F181B", # mdi-coffee-maker-outline
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+      "\U000F08CA", # mdi-bus-clock
+      "\U000F1639", # mdi-minus-thick
+      "\U000F11EC", # mdi-plus-thick
+      "\U000F15FA", # mdi-windsock
+      "\U000F029A", # mdi-gauge
+      "\U000F058E", # mdi-water-percent
+     ]
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: mdi_52
+    size: 52
+    bpp: 4
+    glyphs: [
+      "\U000F0335", # mdi-lightbulb
+      "\U000F0336", # mdi-lightbulb-outline
+      "\U000F08DD", # mdi-floor-lamp
+      "\U000F17C8", # mdi-floor-lamp-outline
+      "\U000F0769", # mdi-ceiling-light
+      "\U000F17C7", # mdi-ceiling-light-outline
+      "\U000F0F55", # mdi-home-thermometer-outline
+      "\U000F0F54", # mdi-home-thermometer
+      "\U000F10C2", # mdi-thermometer-high
+      "\U000F10C3", # mdi-thermometer-low
+      "\U000F0393", # mdi-thermostat
+      "\U000F0241", # mdi-flash
+      "\U000F0A79", # mdi-trashcan
+      "\U000F0A7A", # mdi-trashcan-outline
+      "\U000F1001", # mdi-newspaper-variant
+      "\U000F1004", # mdi-newspaper-variant-outline
+      "\U000F06EE", # mdi-mailbox
+      "\U000F0D8C", # mdi-mailbox-outline
+      "\U000F0114", # mdi-cash
+      "\U000F109F", # mdi-coffee-maker
+      "\U000F181B", # mdi-coffee-maker-outline
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+      "\U000F08CA", # mdi-bus-clock
+      "\U000F1639", # mdi-minus-thick
+      "\U000F11EC", # mdi-plus-thick
+      "\U000F15FA", # mdi-windsock
+      "\U000F029A", # mdi-gauge
+      "\U000F058E", # mdi-water-percent
+     ]
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: mdi_42
+    size: 42
+    bpp: 4
+    glyphs: [
+      "\U000F0335", # mdi-lightbulb
+      "\U000F0336", # mdi-lightbulb-outline
+      "\U000F08DD", # mdi-floor-lamp
+      "\U000F17C8", # mdi-floor-lamp-outline
+      "\U000F0769", # mdi-ceiling-light
+      "\U000F17C7", # mdi-ceiling-light-outline
+      "\U000F0F55", # mdi-home-thermometer-outline
+      "\U000F0F54", # mdi-home-thermometer
+      "\U000F10C2", # mdi-thermometer-high
+      "\U000F10C3", # mdi-thermometer-low
+      "\U000F0393", # mdi-thermostat
+      "\U000F0241", # mdi-flash
+      "\U000F0A79", # mdi-trashcan
+      "\U000F0A7A", # mdi-trashcan-outline
+      "\U000F1001", # mdi-newspaper-variant
+      "\U000F1004", # mdi-newspaper-variant-outline
+      "\U000F06EE", # mdi-mailbox
+      "\U000F0D8C", # mdi-mailbox-outline
+      "\U000F0114", # mdi-cash
+      "\U000F109F", # mdi-coffee-maker
+      "\U000F181B", # mdi-coffee-maker-outline
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+      "\U000F08CA", # mdi-bus-clock
+      "\U000F1639", # mdi-minus-thick
+      "\U000F11EC", # mdi-plus-thick
+      "\U000F15FA", # mdi-windsock
+      "\U000F029A", # mdi-gauge
+      "\U000F058E", # mdi-water-percent
+     ]
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: mdi_30
+    size: 30
+    bpp: 4
+    glyphs: [
+      "\U000F0335", # mdi-lightbulb
+      "\U000F0336", # mdi-lightbulb-outline
+      "\U000F08DD", # mdi-floor-lamp
+      "\U000F17C8", # mdi-floor-lamp-outline
+      "\U000F0769", # mdi-ceiling-light
+      "\U000F17C7", # mdi-ceiling-light-outline
+      "\U000F0F55", # mdi-home-thermometer-outline
+      "\U000F0F54", # mdi-home-thermometer
+      "\U000F10C2", # mdi-thermometer-high
+      "\U000F10C3", # mdi-thermometer-low
+      "\U000F0393", # mdi-thermostat
+      "\U000F0241", # mdi-flash
+      "\U000F0A79", # mdi-trashcan
+      "\U000F0A7A", # mdi-trashcan-outline
+      "\U000F1001", # mdi-newspaper-variant
+      "\U000F1004", # mdi-newspaper-variant-outline
+      "\U000F06EE", # mdi-mailbox
+      "\U000F0D8C", # mdi-mailbox-outline
+      "\U000F0114", # mdi-cash
+      "\U000F109F", # mdi-coffee-maker
+      "\U000F181B", # mdi-coffee-maker-outline
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+      "\U000F08CA", # mdi-bus-clock
+      "\U000F1639", # mdi-minus-thick
+      "\U000F11EC", # mdi-plus-thick
+      "\U000F15FA", # mdi-windsock
+      "\U000F029A", # mdi-gauge
+      "\U000F058E", # mdi-water-percent
+     ]
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: mdi_20
+    size: 20
+    bpp: 4
+    glyphs: [
+      "\U000F0335", # mdi-lightbulb
+      "\U000F0336", # mdi-lightbulb-outline
+      "\U000F08DD", # mdi-floor-lamp
+      "\U000F17C8", # mdi-floor-lamp-outline
+      "\U000F0769", # mdi-ceiling-light
+      "\U000F17C7", # mdi-ceiling-light-outline
+      "\U000F0F55", # mdi-home-thermometer-outline
+      "\U000F0F54", # mdi-home-thermometer
+      "\U000F10C2", # mdi-thermometer-high
+      "\U000F10C3", # mdi-thermometer-low
+      "\U000F0393", # mdi-thermostat
+      "\U000F0241", # mdi-flash
+      "\U000F0A79", # mdi-trashcan
+      "\U000F0A7A", # mdi-trashcan-outline
+      "\U000F1001", # mdi-newspaper-variant
+      "\U000F1004", # mdi-newspaper-variant-outline
+      "\U000F06EE", # mdi-mailbox
+      "\U000F0D8C", # mdi-mailbox-outline
+      "\U000F0114", # mdi-cash
+      "\U000F109F", # mdi-coffee-maker
+      "\U000F181B", # mdi-coffee-maker-outline
+      "\U000F036C", # mdi-microphone
+      "\U000F07D1", # mdi-home_automation
+      "\U000F1639", # mdi-minus-thick
+      "\U000F11EC", # mdi-plus-thick
+      "\U000F15FA", # mdi-windsock
+      "\U000F029A", # mdi-gauge
+      "\U000F058E", # mdi-water-percent
+     ]
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: icons_100
+    size: 100
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: icons_40
+    size: 40
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+  - file: https://img.duckboot.net/materialdesignicons-webfont.ttf
+    id: icons_50
+    size: 50
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]  
+  - file: gfonts://Roboto@400
+    id: roboto_16
+    size: 16
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_18
+    size: 18
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_20
+    size: 20
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_22
+    size: 22
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_24
+    size: 24
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_28
+    size: 24
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_30
+    size: 30
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_32
+    size: 32
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_36
+    size: 36
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_40
+    size: 40
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_42
+    size: 42
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity
+  - file: gfonts://Roboto@400
+    id: roboto_46
+    size: 46
+    bpp: 8
+    glyphs: ${normal_glyphs} # just temperature/humidity

@@ -1,0 +1,337 @@
+substitutions:
+  my_name: "Round Screen Main Bedroom"
+
+packages:
+  fonts: !include modules/common/fonts.yaml
+  wifi: !include modules/common/wifi.yaml
+  image: !include modules/common/images.yaml
+  core: !include modules/common/core.yaml
+  color: !include modules/common/color.yaml
+  hardware: !include modules/hardware/guition-1.8-360x360-round.yaml
+  top_layer: !include modules/lvgl/top_layer_small_round_screen.yaml
+  theme: !include modules/lvgl/theme.yaml
+  style_definitions: !include modules/lvgl/style_definitions_common.yaml
+
+
+esphome:
+  name: esp-screen-main-bedroom
+  friendly_name: ${my_name}
+  on_boot:
+    - lvgl.widget.hide: voice_screen
+    - lvgl.widget.hide: ok_screen
+    - lvgl.widget.hide: not_ok_screen
+    - delay: 10s
+    - lvgl.widget.hide: boot_screen
+
+# Web server
+web_server: 
+  port: 80
+  version: 3
+
+sensor:
+  - platform: homeassistant
+    id: temperatur_ute_text
+    entity_id: sensor.temperatur_ute
+    on_value:
+      - lvgl.label.update:
+          id: lbl_temperature_ute_text
+          text:
+            format: "%.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: temperature_1_stue_average
+    name: "Average Temperature Sensor Livingroom From Home Assistant"
+    entity_id: sensor.temperature_1_stue_average
+    on_value:
+      - lvgl.label.update:
+          id: lbl_temperature_inne_text
+          text:
+            format: "%.1f °C"
+            args: [ 'x' ]
+
+text_sensor:
+# Setter string til icon definert i fonts.yaml utfra openweathermap
+  - platform: homeassistant
+    id: sensor_weather_icon
+    entity_id: sensor.openweathermap_condition
+    on_value:
+      - lvgl.label.update:
+          id: lbl_weather_condition_icon
+          text: !lambda |-
+            static char buf[10];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "\U000F0594";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "\U000F0590";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "\U000F0F2F";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "\U000F0591";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "\U000F0592";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "\U000F0593";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "\U000F067E";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "\U000F0595";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "\U000F0596";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "\U000F0597";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "\U000F0598";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "\U000F067F";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "\U000F0599";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "\U000F059D";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "\U000F059E";
+            } else {
+              icon = "\U000F14E4";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+      - lvgl.label.update:
+          id: lbl_weather_condition_name
+          text: !lambda |-
+            static char buf[15];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "Klar natt";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "Overskyet";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "Supert";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "Tåke";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "Hagl";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "Tordenvær";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "Regn og\ntorden";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "Delvis\nskyet";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "Mye regn";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "Regn";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "Snø";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "Sklett";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "Sol";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "Vindfullt";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "Ruskevær";
+            } else {
+              icon = "Ukjent";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+# Setter string for alarmen
+  - platform: homeassistant
+    id: sensor_alarm_status
+    entity_id: alarm_control_panel.alarmpanel_1_gang
+    on_value:
+      - lvgl.label.update:
+          id: lbl_alarm_condition_name
+          text: !lambda |-
+            static char buf[15];
+            std::string icon;
+            if (0 == x.compare(std::string{"disarmed"})) {
+                icon = "Alarmen er av";
+            } else if (0 == x.compare(std::string{"armed_home"})) {
+                icon = "Alarm hjemme er på";
+            } else if (0 == x.compare(std::string{"armed_away"})) {
+                icon = "Alarm borte er på";
+            } else {
+              icon = "Ukjent";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+      - if:
+          condition:
+            text_sensor.state:
+              id: sensor_alarm_status
+              state: "disarmed"
+          then:
+            - lvgl.widget.update:
+                id: lbl_alarm_condition_name
+                text_color: Forest_Green
+      - if:
+          condition:
+            text_sensor.state:
+              id: sensor_alarm_status
+              state: "armed_home"
+          then:
+            - lvgl.widget.update:
+                id: lbl_alarm_condition_name
+                text_color: Orange_Red
+      - if:
+          condition:
+            text_sensor.state:
+              id: sensor_alarm_status
+              state: "armed_away"
+          then:
+            - lvgl.widget.update:
+                id: lbl_alarm_condition_name
+                text_color: Indian_Red
+
+
+
+lvgl:
+  #full_refresh: true # redraw whole display every time so very slow
+  displays:
+    - main_display
+  touchscreens:
+    - my_touchscreen
+  on_idle:
+    timeout: 240s
+    then:
+      - logger.log: "LVGL is idle"
+      - light.turn_off: backlight
+      - lvgl.pause:
+          show_snow: true # Prevent burn-in  disp_bg_color: black
+  pages:
+    - id: main_page
+      bg_color: black
+      widgets:
+        - obj:
+            align: CENTER
+            width: 350
+            height: 350
+            pad_all: 2
+            bg_opa: TRANSP
+            bg_color: black
+            border_opa: COVER
+            border_color: white
+            border_width: 0
+            layout:
+              pad_column: 0
+              pad_row: 0
+              type: GRID
+              grid_rows: [35, 35, 35, 35, 35, 35, 35, 35, 35, 35]
+              grid_columns: [35, 35, 35, 35, 35, 35, 35, 35, 35, 35]
+            widgets:
+# Weather
+              - label:
+                  text: "\U000F14E4"
+                  id: lbl_weather_condition_icon
+                  text_font: icons_100
+                  text_color: white
+                  text_align: CENTER
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "Unknown"
+                  id: lbl_weather_condition_name
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 4
+                  grid_cell_row_span: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: lbl_temperature_inne_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 2
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "--.- °C"
+                  id: lbl_temperature_ute_text
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 2
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+# Good morning
+              - button:
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 1
+                  grid_cell_row_span: 3
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  widgets:
+                    - label:
+                        align: center
+                        text: "\U000F0599"
+                        text_font: mdi_82
+                        text_color: Yellow
+                  on_short_click:
+                    - homeassistant.action:
+                        action: input_button.press
+                        data:
+                          entity_id: input_button.godmorgen_helper
+# Good night
+              - button:
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 7
+                  grid_cell_row_span: 3
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+                  widgets:
+                    - label:
+                        align: center
+                        text: "\U000F0F65"
+                        text_font: mdi_82
+                        text_color: Light_Golden_Rod_Yellow
+                  on_short_click:
+                    - homeassistant.action:
+                        action: input_button.press
+                        data:
+                          entity_id: input_button.godnatt_helper
+
+              - label:
+                  text: "Ukjent"
+                  id: lbl_alarm_condition_name
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_24
+                  grid_cell_row_pos: 7
+                  grid_cell_column_pos: 3
+                  grid_cell_row_span: 1
+                  grid_cell_column_span: 4
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: CENTER
+
+touchscreen:
+  on_touch:
+    - if:
+        condition: lvgl.is_paused
+        then:
+          - logger.log: "LVGL resuming"
+          - lvgl.resume:
+          - lvgl.page.show: main_page
+          - lvgl.widget.redraw
+          - light.turn_on: backlight

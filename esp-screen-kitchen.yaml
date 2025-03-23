@@ -1,0 +1,1115 @@
+substitutions:
+  my_name: "Round Screen Kitchen"
+
+packages:
+  fonts: !include modules/common/fonts.yaml
+  wifi: !include modules/common/wifi.yaml
+  image: !include modules/common/images.yaml
+  core: !include modules/common/core.yaml
+  hardware: !include modules/hardware/guition-1.8-360x360-round.yaml
+  top_layer: !include modules/lvgl/top_layer_small_round_screen.yaml
+  theme: !include modules/lvgl/theme.yaml
+  style_definitions: !include modules/lvgl/style_definitions_common.yaml
+#  bluetooth: !include modules/common/bluetooth_tracker.yaml
+
+esphome:
+  name: esp-screen-kitchen
+  friendly_name: ${my_name}
+  on_boot:
+    - lvgl.widget.hide: voice_screen
+    - lvgl.widget.hide: ok_screen
+    - lvgl.widget.hide: not_ok_screen
+    - delay: 10s
+    - lvgl.widget.hide: boot_screen
+
+# Web server
+web_server: 
+  port: 80
+  version: 3
+#  css_url: css.css  
+#  js_url: js.js
+
+# Er det noen på kjøkkenet
+binary_sensor:
+  - platform: homeassistant
+    name: "presence_kitchen_sensor"
+    id: presence_kitchen_sensor
+    entity_id: binary_sensor.presence_1_kjokken_presence
+    on_state:
+      - if:
+          condition:
+            - binary_sensor.is_on: "presence_kitchen_sensor"
+          then:      
+            - logger.log: "LVGL resume"
+            - lvgl.resume:
+            - lvgl.page.show: main_page
+            - lvgl.widget.redraw
+            - light.turn_on: backlight
+          else:
+            - logger.log: "LVGL is idle"
+            - light.turn_off: 
+                id: backlight
+                transition_length: 5s          
+            - lvgl.pause:
+                show_snow: true # Prevent burn-in
+
+# Strømsensorer
+sensor:
+  - platform: homeassistant
+    id: sensor_forbruk_hittil_denne_maned
+    entity_id: sensor.monthly_net_consumption_krokliveien
+    on_value:
+      - lvgl.label.update:
+          id: power_lbl_forbruk_denne_maned
+          text:
+            format: "%.0f kWh"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: sensor_forbruk_hittil_i_dag
+    entity_id: !secret accumulated_consumption_address
+    on_value:
+      - lvgl.label.update:
+          id: power_lbl_forbruk_hittil_i_dag
+          text:
+            format: "%.0f kWh"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: sensor_pris_hittil_i_dag
+    entity_id: !secret daily_cost_with_subsidy_address
+    on_value:
+      - lvgl.label.update:
+          id: power_lbl_pris_hittil_i_dag
+          text:
+            format: "%.2f kr"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: sensor_pris_denne_maned
+    entity_id: !secret monthly_cost_with_subsidy_address
+    on_value:
+      - lvgl.label.update:
+          id: power_lbl_pris_denne_maned
+          text:
+            format: "%.2f kr"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: sensor_forbruk_akkurat_na
+    entity_id: !secret real_time_consumption_address
+    on_value:
+      - lvgl.label.update:
+          id: main_lbl_forbruk_akkurat_na
+          text: !lambda |-
+            char buf[4];
+            sprintf(buf, "%0.1f", x/1000);
+            return to_string(((std::string)buf).c_str()) + " kW";
+      - lvgl.indicator.update:
+          id: power_meter_input
+          value: !lambda return round(x/1000); 
+      - lvgl.label.update:
+          id: power_lbl_forbruk_akkurat_na
+          text: !lambda |-
+            char buf[4];
+            sprintf(buf, "%0.1f", x/1000);
+            return to_string(((std::string)buf).c_str()) + " kW";
+      - lvgl.indicator.update:
+          id: power_ind_power_meter_input
+          value: !lambda return round(x/1000); 
+  - platform: homeassistant
+    id: sensor_pris_akkurat_na
+    entity_id: !secret estimated_total_price_with_subsidy_and_grid_price_address
+    on_value:
+      - lvgl.label.update:
+          id: main_lbl_pris_akkurat_na
+          text:
+            format: "%.2f kr"
+            args: [ 'x' ]
+      - lvgl.label.update:
+          id: power_lbl_pris_akkurat_na
+          text:
+            format: "%.2f kr"
+            args: [ 'x' ]
+# Temperatursensorer
+  - platform: homeassistant
+    id: sensor_temp_1_stue_average
+    name: "Average Temperature Sensor Livingroom From Home Assistant"
+    entity_id: sensor.temperature_1_stue_average
+    on_value:
+      - lvgl.label.update:
+          id: main_lbl_temp_inne
+          text:
+            format: "%.1f °C"
+            args: [ 'x' ]
+      - lvgl.label.update:
+          id: thm_lbl_temp_inn
+          text:
+            format: "%.1f °C"
+            args: [ 'x' ]
+      - lvgl.indicator.update:
+          id: thm_ind_temp_needle
+          value: !lambda return x * 10;
+  - platform: homeassistant
+    id: sensor_comfort_temp_stue
+    name: "Comfort Livingroom From Home Assistant"
+    entity_id: input_number.temperatur_1_stue_komfort
+    on_value:
+      - lvgl.arc.update:
+          id: thm_arc_bar_thermostat
+          value: !lambda return x;
+      - lvgl.label.update:
+          id: thm_lbl_komfort_temp
+          text:
+            format: "%.0f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: sensor_temperatur_ute
+    entity_id: sensor.temperatur_ute
+    on_value:
+      - lvgl.label.update:
+          id: main_lbl_temp_outside
+          text:
+            format: "%.1f°C"
+            args: [ 'x' ]
+# Værsensorer
+  - platform: homeassistant
+    id: lbl_weather_status_wind_sensor
+    entity_id: sensor.wind_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_status_wind
+          text:
+            format: "%.1f m/s"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: lbl_weather_status_temperature_high
+    entity_id: sensor.temperature_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_temperature_high_status
+          text:
+            format: "%.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: lbl_weather_status_temperature_low
+    entity_id: sensor.low_temperature_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_temperature_low_status
+          text:
+            format: "%.1f °C"
+            args: [ 'x' ]
+  - platform: homeassistant
+    id: sensor_precipitation_status
+    entity_id: sensor.precipitation_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_precipitation_status
+          text:
+            format: "%.0f %%"
+            args: [ 'x' ]
+
+text_sensor:
+# Setter string til icon definert i fonts.yaml utfra openweathermap
+  - platform: homeassistant
+    id: sensor_weather_icon
+    entity_id: sensor.condition_forecast_next_day
+    on_value:
+      - lvgl.label.update:
+          id: wth_lbl_weather_condition_icon
+          text: !lambda |-
+            static char buf[10];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "\U000F0594";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "\U000F0590";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "\U000F0F2F";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "\U000F0591";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "\U000F0592";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "\U000F0593";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "\U000F067E";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "\U000F0595";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "\U000F0596";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "\U000F0597";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "\U000F0598";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "\U000F067F";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "\U000F0599";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "\U000F059D";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "\U000F059E";
+            } else {
+              icon = "\U000F14E4";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+      - lvgl.label.update:
+          id: wth_lbl_weather_condition_name
+          text: !lambda |-
+            static char buf[15];
+            std::string icon;
+            if (0 == x.compare(std::string{"clear-night"})) {
+                icon = "Klar natt";
+            } else if (0 == x.compare(std::string{"cloudy"})) {
+                icon = "Overskyet";
+            } else if (0 == x.compare(std::string{"exceptional"})) {
+                icon = "Supert";
+            } else if (0 == x.compare(std::string{"fog"})) {
+                icon = "Tåke";
+            } else if (0 == x.compare(std::string{"hail"})) {
+                icon = "Hagl";
+            } else if (0 == x.compare(std::string{"lightning"})) {
+                icon = "Tordenvær";
+            } else if (0 == x.compare(std::string{"lightning-rainy"})) {
+                icon = "Regn og\ntorden";
+            } else if (0 == x.compare(std::string{"partlycloudy"})) {
+                icon = "Delvis\nskyet";
+            } else if (0 == x.compare(std::string{"pouring"})) {
+                icon = "Mye regn";
+            } else if (0 == x.compare(std::string{"rainy"})) {
+                icon = "Regn";
+            } else if (0 == x.compare(std::string{"snowy"})) {
+                icon = "Snø";
+            } else if (0 == x.compare(std::string{"snowy-rainy"})) {
+                icon = "Sklett";
+            } else if (0 == x.compare(std::string{"sunny"})) {
+                icon = "Sol";
+            } else if (0 == x.compare(std::string{"windy"})) {
+                icon = "Vindfullt";
+            } else if (0 == x.compare(std::string{"windy-variant"})) {
+                icon = "Ruskevær";
+            } else {
+              icon = "Ukjent";
+            }
+            snprintf(buf, sizeof(buf), "%s", icon.c_str());
+            return buf;
+# Relativ dato posten kommer
+  - platform: homeassistant
+    id: sensor_posten_relative_next
+    entity_id: sensor.posten_sensor_next_relative
+    filters:
+      - to_lower:
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: msgbox_posten_info_lbl
+            text: !lambda return x;
+# Hvor mange dager er det til Papirsøpla tømmes
+  - platform: homeassistant
+    id: sensor_paperwaste_relative_next
+    entity_id: sensor.paperwaste_next
+    filters:
+      - to_lower:
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: msgbox_paperwaste_info_lbl
+            text: !lambda return x;
+# Hvor mange dager er det til Restsøpla tømmes
+  - platform: homeassistant
+    id: sensor_restwaste_relative_next
+    entity_id: sensor.restwaste_next
+    filters:
+      - to_lower:
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: msgbox_restwaste_info_lbl
+            text: !lambda return x;
+# "Lysbrytere" i stua
+  - platform: homeassistant
+    id: ts_taklampe_stua
+    entity_id: light.taklampe_1_stue
+    on_value:
+      - if:
+          condition:
+            text_sensor.state: 
+              id: ts_taklampe_stua
+              state: "on"
+          then:
+            - delay: 500ms
+            - lvgl.matrix.button.update:
+                id: ceiling_light_symbol
+                control:
+                  checked: true
+          else:
+            - delay: 500ms
+            - lvgl.matrix.button.update:
+                id: ceiling_light_symbol
+                control:
+                  checked: false
+  - platform: homeassistant
+    id: ts_lampe_stua
+    entity_id: light.readinglight_1_stue
+    on_value:
+      - if:
+          condition:
+            text_sensor.state: 
+              id: ts_lampe_stua
+              state: "on"
+          then:
+            - delay: 500ms
+            - lvgl.matrix.button.update:
+                id: reading_light_symbol
+                control:
+                  checked: true
+          else:
+            - delay: 500ms
+            - lvgl.matrix.button.update:
+                id: reading_light_symbol
+                control:
+                  checked: false
+# Bryter til kaffetrakteren
+  - platform: homeassistant
+    id: ts_coffee_maker
+    entity_id: switch.kaffetrakter_1_kjokken
+    on_value:
+      - if:
+          condition:
+            text_sensor.state: 
+              id: ts_coffee_maker
+              state: "on"
+          then:
+            - delay: 500ms
+            - lvgl.matrix.button.update:
+                  id: coffee_maker_symbol
+                  control:
+                    checked: true
+          else:
+            - delay: 500ms
+            - lvgl.matrix.button.update:
+                id: coffee_maker_symbol
+                control:
+                  checked: false
+# Buss til Nydalen og til Sentrum
+  - platform: homeassistant
+    id: ha_entur_businfo_58
+    entity_id: sensor.58_bjerkedalen_park_platform_10993
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: msgbox_bus_58_info_lbl
+            text:
+              format: "%s min"
+              args: [ 'x.c_str()' ]
+  - platform: homeassistant
+    id: ha_entur_businfo_60
+    entity_id: sensor.60_okernbraten_platform_10901
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: msgbox_bus_60_info_lbl
+            text:
+              format: "%s min"
+              args: [ 'x.c_str()' ]
+
+##########
+#  LVGL  #
+##########
+lvgl:
+#full_refresh: true # redraw whole display every time so very slow
+  displays:
+    - main_display
+  touchscreens:
+    - my_touchscreen
+  on_idle:
+    timeout: 240s  # Turn off back light if idle for 10 secs
+    then:
+      - logger.log: "LVGL is idle"
+      - light.turn_off: 
+          id: backlight
+          transition_length: 5s          
+      - lvgl.pause:
+          show_snow: true # Prevent burn-in  disp_bg_color: black
+# 3 msgboxer for å vise info for posten, papirsøppel og restsøppel
+  msgboxes:
+    - id: msgbox_posten_info
+      text_font: roboto_24
+      title: "Posten kommer"
+      widgets:
+        - label:
+            id: msgbox_posten_info_lbl
+            text_font: roboto_30
+            text: "Ukjent"
+            align: center
+    - id: msgbox_restwaste_info
+      text_font: roboto_24
+      title: "Restavfall"
+      widgets:
+        - label:
+            id: msgbox_restwaste_info_lbl
+            text_font: roboto_30
+            text: "Ukjent"
+            align: center
+    - id: msgbox_paperwaste_info
+      text_font: roboto_24
+      title: "Papiravfall"
+      widgets:
+        - label:
+            id: msgbox_paperwaste_info_lbl
+            text_font: roboto_30
+            text: "Ukjent"
+            align: center
+    - id: msgbox_buses_info
+      text_font: roboto_24
+      title: "Busser"
+      widgets:
+        - label:
+            text_font: roboto_24
+            text: "58 Nydalen"
+            align: LEFT_MID
+        - label:
+            id: msgbox_bus_58_info_lbl
+            text_font: roboto_24
+            text: "Ukjent"
+            align: RIGHT_MID
+        - label:
+            text_font: roboto_24
+            text: "60 Sentrum"
+            align: BOTTOM_LEFT
+        - label:
+            id: msgbox_bus_60_info_lbl
+            text_font: roboto_24
+            text: "Ukjent"
+            align: BOTTOM_RIGHT
+
+  pages:
+    - id: main_page
+      bg_color: black
+      widgets:
+        - obj: # Meter
+            height: 100% # needed to be explicitily defined for my round display to not have weird corder line overlappting gauge
+            width: 100%
+            #bg_opa: TRANSP
+            bg_color: 0
+            border_width: 0
+            outline_width: 0
+            shadow_width: 0
+            pad_all: 14
+            align: center
+            #scrollbar_mode: "off"
+            widgets:
+              - meter: # Gradient color  arc
+                  height: 100%
+                  width: 100%
+                  border_width: 0
+                  outline_width: 0
+                  align: center
+                  bg_color: 0
+                  #bg_opa: TRANSP
+                  scales:
+                    angle_range: 180 # sets the total angle to 180 = starts mid left and ends mid right
+                    range_to: 9
+                    range_from: 0
+                    ticks:
+                      count: 0 
+                    indicators:
+                      - line:
+                          id: power_meter_input
+                          width: 8
+                          color: 0xFFFFFF
+                          r_mod: 12 #sets line length by this much difference from the scale default radius
+                          value: 5
+                      - arc:
+                          color: 0x00FF00
+                          r_mod: 10 #radius difference from the scale default radius
+                          width: 25
+                          start_value: 0
+                          end_value: 3
+                      - arc:
+                          color: 0xFFFF00 
+                          r_mod: 10 #radius difference from the scale default radius
+                          width: 25
+                          start_value: 3
+                          end_value: 6
+                      - arc:
+                          color: 0xFF3000
+                          r_mod: 10 #radius difference from the scale default radius
+                          width: 25
+                          start_value: 6
+                          end_value: 9
+              - obj: # to cover the middle part of meter indicator line
+                  height: 80%
+                  width: 80%
+                  radius: 40%
+                  align: CENTER
+                  border_width: 0
+                  pad_all: 0
+                  bg_color: 0x000000
+              - label:
+                  styles: font_style
+                  text_font: roboto_30 # override font size
+                  id: main_lbl_forbruk_akkurat_na
+                  y: -90
+                  on_long_press:
+                    then:
+                      lvgl.page.show: page_power_info
+              - label:
+                  styles: font_style
+                  text_font: mdi_30 # override font size
+                  id: flash_icon_1
+                  text: "\U000F0241"
+                  text_color: yellow
+                  x: -60
+                  y: -90
+                  on_long_press:
+                    then:
+                      lvgl.page.show: page_power_info
+              - label:
+                  styles: font_style
+                  text_font: mdi_30 # override font size
+                  id: lbl_temp_inne_icon
+                  text: "\U000F0F54"
+                  text_color: red
+                  y: -7
+                  x: 15
+                  on_long_press:
+                    then:
+                      lvgl.page.show: thermostat_page
+              - label:
+                  styles: font_style
+                  text_font: roboto_24 # override font size
+                  id: main_lbl_temp_inne
+                  y: -7
+                  x: 75
+                  on_long_press:
+                    then:
+                      lvgl.page.show: thermostat_page
+              - label:
+                  styles: font_style
+                  text_font: mdi_30 # override font size
+                  id: lbl_pris_akkurat_na_icon
+                  text: "\U000F0114"
+                  text_color: green
+                  y: -50
+                  x: -50
+                  on_long_press:
+                    then:
+                      lvgl.page.show: page_power_info
+              - label:
+                  styles: font_style
+                  text_font: roboto_24 # override font size
+                  id: main_lbl_pris_akkurat_na
+                  y: -50
+                  x: 20
+                  on_long_press:
+                    then:
+                      lvgl.page.show: page_power_info
+              - label:
+                  styles: font_style
+                  text_font: mdi_30 # override font size
+                  id: lbl_temp_outside_icon
+                  text: "\U000F0F55"
+                  text_color: blue
+                  y: -7
+                  x: -115
+                  on_long_press:
+                    then:
+                      lvgl.page.show: weather_status
+              - label:
+                  styles: font_style
+                  text_font: roboto_24 # override font size
+                  id: main_lbl_temp_outside
+                  y: -7
+                  x: -55
+                  on_long_press:
+                    then:
+                      lvgl.page.show: weather_status
+              - buttonmatrix:
+                  align: CENTER
+                  pad_all: 0
+                  outline_width: 0
+                  border_color: black
+                  border_width: 0
+                  border_opa: TRANSP
+                  x: 0
+                  y: 40
+                  width: 300
+                  height: 50
+                  bg_color: black
+                  text_color: 0xD3D3D3
+                  id: btnmtx_lights
+                  text_font: mdi_42
+                  items:
+                    shadow_opa: TRANSP
+                    bg_color: black
+                    text_color: 0xD3D3D3
+                    border_color: black
+                    border_width: 0
+                    border_opa: TRANSP
+                    checked: # set some button colors to be different in checked state
+                      bg_color: black
+                      text_color: yellow
+                      bg_opa: TRANSP
+                  rows:
+                    - buttons:
+                      - id: ceiling_light_symbol
+                        text: "\U000F0769"
+                        control:
+                          checkable: true
+                        on_short_click:
+                          then:
+                            - homeassistant.action:
+                                action: light.toggle
+                                data:
+                                  entity_id: light.taklampe_1_stue
+                            - delay: 2ms
+                            - homeassistant.action:
+                                action: input_button.press
+                                data:
+                                  entity_id: input_button.lagre_lys
+                        on_long_press:
+                          then:
+                            lvgl.page.show: page_sliders_light
+                      - id: coffee_maker_symbol
+                        text: "\U000F109F"
+                        control:
+                          checkable: true
+                        on_release:
+                          then:
+                            - homeassistant.action:
+                                action: switch.toggle
+                                data:
+                                  entity_id: switch.kaffetrakter_1_kjokken
+                      - id: reading_light_symbol
+                        text: "\U000F08DD"
+                        control:
+                          checkable: true
+                        on_short_click:
+                          then:
+                            - homeassistant.action:
+                                action: light.toggle
+                                data:
+                                  entity_id: light.readinglight_1_stue
+                            - delay: 2s
+                            - homeassistant.action:
+                                action: input_button.press
+                                data:
+                                  entity_id: input_button.lagre_lys
+                        on_long_press:
+                          then:
+                            lvgl.page.show: page_sliders_light
+              - buttonmatrix:
+                  align: CENTER
+                  pad_all: 0
+                  outline_width: 0
+                  border_color: black
+                  border_width: 0
+                  border_opa: TRANSP
+                  x: 0
+                  y: 90
+                  width: 150
+                  height: 50
+                  bg_color: black
+                  text_color: 0xD3D3D3
+                  id: post_garbage
+                  text_font: mdi_30
+                  items:
+                    shadow_opa: TRANSP
+                    bg_color: black
+                    text_color: 0xD3D3D3
+                    border_color: black
+                    border_width: 0
+                    border_opa: TRANSP
+                  rows:
+                    - buttons:
+                      - id: post_symbol
+                        text: "\U000F06EE"
+                        on_release:
+                          then:
+                            - lvgl.widget.show: msgbox_posten_info
+                      - id: paperwaste_symbol
+                        text: "\U000F1001"
+                        on_release:
+                          then:
+                            - lvgl.widget.show: msgbox_paperwaste_info
+                      - id: restwaste_symbol
+                        text: "\U000F0A79"
+                        on_release:
+                          then:
+                            - lvgl.widget.show: msgbox_restwaste_info
+                      - id: bus_symbol
+                        text: "\U000F08CA"
+                        on_release:
+                          then:
+                            - lvgl.widget.show: msgbox_buses_info
+    - id: weather_status
+      skip: true
+      bg_color: black
+      widgets:
+        - obj:
+            align: CENTER
+            width: 228
+            height: 250
+            pad_all: 10
+            bg_color: black
+            layout:
+              pad_column: 0
+              type: GRID
+              grid_rows: [FR(48), FR(13), FR(13), FR(13), FR(13)]
+              grid_columns: [FR(5), FR(40), FR(50), FR(5)]
+            widgets:
+              - label:
+                  text: "\U000F14E4"
+                  id: wth_lbl_weather_condition_icon
+                  text_font: icons_100
+                  text_color: white
+                  text_align: CENTER
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 0
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: CENTER
+                  grid_cell_y_align: START
+
+              - label:
+                  text: "Unknown"
+                  id: wth_lbl_weather_condition_name
+                  text_align: CENTER
+                  text_color: white
+                  text_font: roboto_20
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 2
+                  grid_cell_column_span: 2
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: CENTER
+
+              - label:
+                  text: "Temp høy:"
+                  text_color: white
+                  text_font: roboto_20
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 1
+
+              - label:
+                  text: "--- °C"
+                  id: wth_lbl_temperature_high_status
+                  text_color: white
+                  text_font: roboto_20
+                  text_align: RIGHT
+                  grid_cell_row_pos: 1
+                  grid_cell_column_pos: 2
+                  grid_cell_x_align: STRETCH
+
+              - label:
+                  text: "Temp lav:"
+                  text_color: white
+                  text_font: roboto_20
+                  grid_cell_row_pos: 2
+                  grid_cell_column_pos: 1
+
+              - label:
+                  text: "-- °C"
+                  text_color: white
+                  text_font: roboto_20
+                  id: wth_lbl_temperature_low_status
+                  text_align: RIGHT
+                  grid_cell_row_pos: 2
+                  grid_cell_column_pos: 2
+                  grid_cell_x_align: STRETCH
+
+              - label:
+                  text: "Vind:"
+                  text_font: roboto_20
+                  text_color: white
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 1
+
+              - label:
+                  text: "--.- m/s"
+                  id: wth_lbl_status_wind
+                  text_color: white
+                  text_font: roboto_20
+                  text_align: RIGHT
+                  grid_cell_row_pos: 3
+                  grid_cell_column_pos: 2
+                  grid_cell_x_align: STRETCH
+
+              - label:
+                  text: "Nedbør:"
+                  text_font: roboto_20
+                  text_color: white
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 1
+
+              - label:
+                  text: "--.- %"
+                  text_font: roboto_20
+                  text_color: white
+                  id: wth_lbl_precipitation_status
+                  text_align: RIGHT
+                  grid_cell_row_pos: 4
+                  grid_cell_column_pos: 2
+                  grid_cell_x_align: STRETCH
+    - id: page_sliders_light
+      skip: true
+      bg_color: black
+      widgets:
+        - label:
+            align: CENTER
+            styles: font_style
+            text_font: roboto_30 # override font size
+            y: -100 #negative = higher
+            x: 0
+            text: "Taklampe"        
+        - slider:
+            id: dimmer_slider_taklampe
+            align: CENTER
+            x: 0
+            y: -50
+            width: 180
+            height: 30
+            pad_all: 8
+            min_value: 0
+            max_value: 255
+            on_release:
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.taklampe_1_stue
+                    brightness: !lambda return int(x);
+        - label:
+            align: CENTER
+            styles: font_style
+            text_font: roboto_30 # override font size
+            y: 0 #negative = higher
+            x: 0
+            text: "Stålampe"        
+        - slider:
+            id: dimmer_slider_lampe
+            align: CENTER
+            x: 0
+            y: 50
+            width: 180
+            height: 30
+            pad_all: 8
+            min_value: 0
+            max_value: 255
+            on_release:
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.readinglight_1_stue
+                    brightness: !lambda return int(x);
+    - id: thermostat_page
+      bg_color: black
+      widgets:
+        - meter:
+            height: 100%
+            width: 100%
+            border_width: 0
+            align: CENTER
+            bg_opa: TRANSP
+            border_color: 0x000000
+            bg_color: 0x000000
+            scales:
+              - range_from: 15
+                range_to: 30
+                angle_range: 180
+                ticks:
+                  count: 75
+                  width: 4
+                  length: 60
+                indicators:
+                  - tick_style:
+                      start_value: 15
+                      end_value: 30
+                      color_start: 0x0000FF
+                      color_end: 0xFF0000
+              - range_from: 150
+                range_to: 300
+                angle_range: 180
+                ticks:
+                  count: 0
+                indicators:
+                  - line:
+                      id: thm_ind_temp_needle
+                      color: 0xFFFF00
+                      width: 8
+                      r_mod: 2
+                      value: 20
+        - obj: # to cover the middle part of meter indicator line
+            height: 240
+            width: 240
+            radius: 120
+            align: CENTER
+            border_width: 0
+            pad_all: 0
+            bg_color: 0x000000
+        - label:
+            id: thm_lbl_temp_inn
+            text: "--.-°C"
+            align: CENTER
+            y: 0
+            text_font: roboto_40
+            text_color: white
+        - arc:
+            align: CENTER
+            height: 310
+            width: 310
+            #radius: 175
+            border_width: 0
+            x: 0
+            y: 0 # distance down from top
+            id: thm_arc_bar_thermostat
+            value: 20
+            min_value: 15
+            max_value: 30
+            adjustable: true
+            end_angle: 0
+            start_angle: 180
+            arc_width: 20
+            arc_opa: TRANSP
+            border_opa: TRANSP
+            bg_opa: TRANSP
+            border_color: 0x000000
+            indicator:
+              opa: TRANSP
+              bg_opa: TRANSP
+              border_opa: TRANSP
+              border_color: 0x000000
+              arc_width: 30
+            knob:
+              bg_color: 0x00FF00
+              bg_opa: COVER
+              border_width: 2
+              text_color: 0xFFFFFF            
+            on_release:
+              - homeassistant.action:
+                  action: input_number.set_value
+                  data:
+                      entity_id: input_number.temperatur_1_stue_komfort
+                      value: !lambda return x;
+            on_value:
+              - lvgl.label.update:
+                  id: thm_lbl_komfort_temp
+                  text_font: roboto_24
+                  text:
+                    format: "%.0f°C"
+                    args: [ 'x' ]
+        - label:
+            id: thm_lbl_komfort_temp
+            text: "--.-°C"
+            align: CENTER
+            y: -40
+            text_font: roboto_30
+            text_color: white
+    - id: page_power_info
+      bg_color: black
+      widgets:
+        - obj: # Meter
+            height: 400 # needed to be explicitily defined for my round display to not have weird corder line overlappting gauge
+            width: 400
+            #bg_opa: TRANSP
+            bg_color: 0
+            border_width: 0
+            outline_width: 0
+            shadow_width: 0
+            pad_all: 14
+            align: center
+            #scrollbar_mode: "off"
+            widgets:
+              - meter: # Gradient color  arc
+                  height: 100%
+                  width: 100%
+                  border_width: 0
+                  outline_width: 0
+                  align: center
+                  bg_color: 0
+                  #bg_opa: TRANSP
+                  scales:
+                    angle_range: 180 # sets the total angle to 180 = starts mid left and ends mid right
+                    range_to: 9
+                    range_from: 0
+                    ticks:
+                      count: 0 
+                    indicators:
+                      - line:
+                          id: power_ind_power_meter_input
+                          width: 8
+                          color: 0xFFFFFF
+                          r_mod: 12 #sets line length by this much difference from the scale default radius
+                          value: 5
+                      - arc:
+                          color: 0x00FF00
+                          r_mod: 10 #radius difference from the scale default radius
+                          width: 25
+                          start_value: 0
+                          end_value: 3
+                      - arc:
+                          color: 0xFFFF00 
+                          r_mod: 10 #radius difference from the scale default radius
+                          width: 25
+                          start_value: 3
+                          end_value: 6
+                      - arc:
+                          color: 0xFF3000
+                          r_mod: 10 #radius difference from the scale default radius
+                          width: 25
+                          start_value: 6
+                          end_value: 9
+              - obj: # to cover the middle part of meter indicator line
+                  height: 80%
+                  width: 80%
+                  radius: 40%
+                  align: CENTER
+                  border_width: 0
+                  pad_all: 0
+                  bg_color: 0x000000
+              - label: # gauge lower and higher range indicators
+                  styles: font_style
+                  text_font: roboto_20 # override font size
+                  y: 20 #negative = higher
+                  x: -150
+                  text: "0"
+              - label:
+                  styles: font_style
+                  text_font: roboto_20 # override font size
+                  y: 20 #negative = higher
+                  x: 150
+                  text: "10"
+              - label:
+                  styles: font_style
+                  id: power_lbl_pris_hittil_i_dag
+                  y: -60 #negative = higher
+              - label:
+                  styles: font_style
+                  id: power_lbl_forbruk_hittil_i_dag
+                  y: -35 #negative = higher
+              - label:
+                  styles: font_style
+                  text_font: roboto_40 # override font size
+                  id: power_lbl_forbruk_akkurat_na
+                  y: 0
+              - label:
+                  styles: font_style
+                  id: power_lbl_pris_akkurat_na
+                  text_color: 0xFFFF00
+                  y: 35
+              - label:
+                  styles: font_style
+                  id: power_lbl_pris_denne_maned
+                  y: 65
+              - label:
+                  styles: font_style
+                  id: power_lbl_forbruk_denne_maned
+                  y: 90
+
+touchscreen:
+  on_touch:
+    - if:
+        condition: lvgl.is_paused
+        then:
+          - logger.log: "LVGL resuming"
+          - lvgl.resume:
+          - lvgl.page.show: main_page
+          - lvgl.widget.redraw
+          - light.turn_on: backlight

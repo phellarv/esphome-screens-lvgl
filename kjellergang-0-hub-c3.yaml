@@ -1,0 +1,30 @@
+substitutions:
+  my_name: "Bluetooth Proxy Cellar"
+
+packages:
+  wifi: !include modules/common/wifi.yaml
+  bluetooth: !include modules/common/bluetooth_tracker.yaml
+
+esphome:
+  name: kjellergang-0-hub-c3
+  friendly_name: ${my_name}
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "DAJRrzy4rBIwfyUQgEx9o26AxUuq7VYWIoVS8lgHeAY="
+    
+ota:
+  - platform: esphome
+    password: "905823b0b0d712bb1fdde46307e1aa0b"
+
+captive_portal:
+    

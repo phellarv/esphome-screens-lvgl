@@ -1,0 +1,33 @@
+---
+
+image:
+  - file: https://esphome.io/_static/logo-text-on-light.svg
+    id: boot_logo_90px
+    resize: 450x90 # aspect ratio 5
+    type: RGB565
+    transparency: alpha_channel
+  - file: https://esphome.io/_static/favicon-512x512.png
+    id: boot_logo
+    resize: 200x200
+    type: RGB565
+    transparency: chroma_key
+  - file: https://www.home-assistant.io/images/assist/assist-icon.svg
+    id: voice_logo
+    resize: 200x200
+    transparency: chroma_key
+    type: RGB565
+  - file: https://img.duckboot.net/ok.png
+    id: ok_logo
+    resize: 200x200
+    transparency: chroma_key
+    type: RGB565
+  - file: https://img.duckboot.net/not-ok.png
+    id: not_ok_logo
+    resize: 200x200
+    transparency: chroma_key
+    type: RGB565
+  - file: https://img.duckboot.net/bg-480x480-1.png
+    id: bg_image
+    resize: 480x480
+    transparency: chroma_key
+    type: RGB565

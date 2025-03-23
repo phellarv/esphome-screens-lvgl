@@ -1,0 +1,75 @@
+substitutions:
+  my_name: "Power Meter Kitchen"
+
+packages:
+  wifi: !include modules/common/wifi.yaml
+
+esphome:
+  name: power-meter-1
+  friendly_name: ${my_name}
+
+esp8266:
+  board: esp01_1m
+
+captive_portal:
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "XPay3F2cyJj0RIDSEspsy89U8vENF2DqllmgfUYyQPc="
+
+ota:
+  - platform: esphome
+    password: "9c7fd1e00b31bd2e86e244f8f6980eeb"
+  
+output:
+- platform: esp8266_pwm
+  id: price_low
+  pin: GPIO00
+- platform: esp8266_pwm
+  id: price_lowmedium
+  pin: GPIO01
+- platform: esp8266_pwm
+  id: price_medium
+  pin: GPIO02
+- platform: esp8266_pwm
+  id: price_mediumhigh
+  pin: GPIO03
+- platform: esp8266_pwm
+  id: price_high
+  pin: GPIO04
+- platform: esp8266_pwm
+  id: alarm_off
+  pin: GPIO13
+- platform: esp8266_pwm
+  id: alarm_on
+  pin: GPIO12
+
+light: 
+- platform: monochromatic
+  name: "Price low"
+  output: price_low
+- platform: monochromatic
+  name: "Price lowmedium"
+  output: price_lowmedium
+- platform: monochromatic
+  name: "Price medium"
+  output: price_medium
+- platform: monochromatic
+  name: "Price mediumhigh"
+  output: price_mediumhigh
+- platform: monochromatic
+  name: "Price high"
+  output: price_high
+- platform: monochromatic
+  name: "Alarm off"
+  output: alarm_off
+- platform: monochromatic
+  name: "Alarm on"
+  output: alarm_on
+
+mqtt:
+  broker: !secret mqtt_broker
+  username: !secret mqtt_username
+  password: !secret mqtt_password  

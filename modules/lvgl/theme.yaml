@@ -1,0 +1,41 @@
+lvgl:
+  theme:
+    button:
+      bg_color: black
+      bg_grad_color: black
+      bg_grad_dir: VER
+      bg_opa: TRANSP
+      border_color: black
+      border_width: 0
+      border_opa: TRANSP
+      text_color: white
+      shadow_opa: TRANSP
+      pressed: # set some button colors to be different in pressed state
+        bg_color: black
+        bg_grad_color: black
+        border_opa: TRANSP
+        bg_opa: TRANSP
+        text_color: white
+        shadow_opa: TRANSP
+      checked: # set some button colors to be different in checked state
+        bg_color: black
+        bg_grad_color: black
+        text_color: yellow
+        bg_opa: TRANSP
+        border_opa: TRANSP
+        shadow_opa: TRANSP
+
+    arc:
+      arc_opa: TRANSP
+      border_opa: TRANSP
+      bg_opa: TRANSP
+      indicator:
+        opa: TRANSP
+        bg_opa: TRANSP
+        border_opa: TRANSP
+        arc_width: 30
+      knob:
+        bg_color: 0x00FF00
+        bg_opa: COVER
+        border_width: 2
+        text_color: 0xFFFFFF
